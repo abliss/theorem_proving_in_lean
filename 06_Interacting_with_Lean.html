@@ -1,0 +1,1646 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-03-16 Thu 19:50 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Theorem Proving in Lean</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="[[http://www.andrew.cmu.edu/user/avigad][Jeremy Avigad]]Jeremy Avigad" />
+<link rel="stylesheet" href="css/tutorial.css"/>
+<link rel="stylesheet" href="css/code.css"/>
+<script type="text/javascript" charset="utf-8">if(!window.PolymerGestures) { var head = document.getElementsByTagName('head')[0]; var js = document.createElement("script"); js.type = "text/javascript"; js.src = "//cdn.jsdelivr.net/webcomponentsjs/0.7.20/webcomponents.min.js"; head.appendChild(js); } </script>
+<link rel='import' href='juicy-ace-editor.html'/>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Theorem Proving in Lean</h1>
+
+<div id="outline-container-orgac7a71d" class="outline-2">
+<h2 id="Interacting_with_Lean"><a id="orgac7a71d"></a><span class="section-number-2"> 6</span> Interacting with Lean</h2>
+<div class="outline-text-2" id="text-Interacting_with_Lean">
+<p>
+You are now familiar with the fundamentals of dependent type theory,
+both as a language for defining mathematical objects and a language
+for constructing proofs. The one thing you are missing is a mechanism
+for defining new data types. We will fill this gap in the next chapter,
+which introduces the notion of an <i>inductive data type</i>. But first, in
+this chapter, we take a break from the mechanics of type theory to
+explore some pragmatic aspects of interacting with Lean.
+</p>
+
+<p>
+Not all of the information found here will be useful to you right
+away. We recommend skimming this section to get a sense of Lean's
+features, and then returning to it as necessary.
+</p>
+</div>
+
+<div id="outline-container-org08bddf7" class="outline-3">
+<h3 id="Importing_Files"><a id="org08bddf7"></a><span class="section-number-3"> 6.1</span> Importing Files</h3>
+<div class="outline-text-3" id="text-Importing_Files">
+<p>
+The goal of Lean's front end is to interpret user input, construct
+formal expressions, and check that they are well formed and type
+correct. Lean also supports the use of various editors, which provide
+continuous checking and feedback. More information can be found on the
+Lean <a target='_blank' href="http://leanprover.github.io/documentation/">documentation pages</a>.
+</p>
+
+<p>
+The definitions and theorems in Lean's standard library are spread
+across multiple files. Users may also wish to make use of additional
+libraries, or develop their own projects across multiple files. When
+Lean starts, it automatically imports the contents of the library
+<code>init</code> folder, which includes a number of fundamental definitions and
+constructions. As a result, most of the examples we present here work
+"out of the box."
+</p>
+
+<p>
+If you want to use additional files, however, they need to be imported
+manually, via an <code>import</code> statement at the beginning of a file. The
+command
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-1' mode="ace/mode/lean" readonly="true">import foo bar.baz.blah
+</juicy-ace-editor><div id='lean-full-code-1' style='display:none'>import foo bar.baz.blah
+</div>
+</div>
+<p>
+imports the files <code>foo.lean</code> and <code>bar/baz/blah.lean</code>, where the
+descriptions are interpreted relative to the Lean <i>search
+path</i>. Information as to how the search path is determined can be
+found on the <a target='_blank' href="http://leanprover.github.io/documentation/">documentation pages</a>. By default, it includes the standard
+library directory, and (in some contexts) the root of the user's local
+project. One can also specify imports relative to the current
+directory; for example,
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-2' mode="ace/mode/lean" readonly="true">import .foo ..bar.baz
+</juicy-ace-editor><div id='lean-full-code-2' style='display:none'>import .foo ..bar.baz
+</div>
+</div>
+<p>
+tells Lean to import <code>foo.lean</code> from the current directory and
+<code>bar/baz.lean</code> relative to the parent of the current directory.
+</p>
+
+<p>
+Importing is transitive. In other words, if you import <code>foo</code> and <code>foo</code>
+imports <code>bar</code>, then you also have access to the contents of <code>bar</code>, and
+do not need to import it explicitly.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org743870e" class="outline-3">
+<h3 id="More_on_Sections"><a id="org743870e"></a><span class="section-number-3"> 6.2</span> More on Sections</h3>
+<div class="outline-text-3" id="text-More_on_Sections">
+<p>
+Lean provides various sectioning mechanisms to help structure a
+theory. We saw in <a href="#" onclick="myModule.loadTutorial('02_Dependent_Type_Theory.html', 'Variables_and_Sections')">Section 2.6</a> that the <code>section</code> command makes it
+possible not only to group together elements of a theory that go
+together, but also to declare variables that are inserted as arguments
+to theorems and definitions, as necessary. 
+Remember that the point of the variable command is to declare
+variables for use in theorems, as in the following example:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-3' mode="ace/mode/lean" readonly="true">section
+  variables x y : ℕ
+
+  def double := x + x
+
+  check double y
+  check double (2 * x)
+
+  theorem t1 : double (x + y) = double x + double y :=
+  by simp [double]
+
+  check t1 y
+  check t1 (2 * x)
+
+  theorem t2 : double (x * y) = double x * y := 
+  by simp [double, mul_add]
+end
+</juicy-ace-editor><div id='lean-full-code-3' style='display:none'>section
+  variables x y : ℕ
+
+  def double := x + x
+
+  check double y
+  check double (2 * x)
+
+  theorem t1 : double (x + y) = double x + double y :=
+  by simp [double]
+
+  check t1 y
+  check t1 (2 * x)
+
+  theorem t2 : double (x * y) = double x * y := 
+  by simp [double, mul_add]
+end
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-3').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The definition of <code>double</code> does not have to declare <code>x</code> as an
+argument; Lean detects the dependence and inserts it
+automatically. Similarly, Lean detects the occurrence of <code>x</code> in <code>t1</code>
+and <code>t2</code>, and inserts it automatically there, too.  
+</p>
+
+<p>
+Note that double does <i>not</i> have <code>y</code> as argument. Variables are only
+included in declarations where they are actually mentioned. More
+precisely, they must be mentioned outside of a tactic block;
+because variables can appear and can be renamed dynamically in a
+tactic proof, there is no reliable way of determining when a name used
+in a tactic proof refers to an element of the context in which the
+theorem is parsed, and Lean does not try to guess. You can manually
+ask Lean to include a variable in every definition in a section with
+the <code>include</code> command.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-4' mode="ace/mode/lean" readonly="true">section
+  variables (x y z : ℕ)
+  variables (h₁ : x = y) (h₂ : y = z)
+
+  include h₁ h₂
+  theorem foo : x = z :=
+  begin
+    rw [h₁, h₂]
+  end
+  omit h₁ h₂
+
+  theorem bar : x = z :=
+  eq.trans h₁ h₂
+
+  theorem baz : x = x := rfl
+
+  check @foo
+  check @bar
+  check @baz
+end
+</juicy-ace-editor><div id='lean-full-code-4' style='display:none'>section
+  variables (x y z : ℕ)
+  variables (h₁ : x = y) (h₂ : y = z)
+
+  include h₁ h₂
+  theorem foo : x = z :=
+  begin
+    rw [h₁, h₂]
+  end
+  omit h₁ h₂
+
+  theorem bar : x = z :=
+  eq.trans h₁ h₂
+
+  theorem baz : x = x := rfl
+
+  check @foo
+  check @bar
+  check @baz
+end
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-4').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The <code>omit</code> command simply undoes the effect of the <code>include</code>; it does
+not prevent the arguments from being included automatically in
+subsequent theorems that mention them. The scope of the <code>include</code>
+statement can also be delimited by enclosing it in a section.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-5' mode="ace/mode/lean" readonly="true">  section include_hs
+  include h₁ h₂
+
+  theorem foo : x = z :=
+  begin
+    rw [h₁, h₂]
+  end
+
+  end include_hs</juicy-ace-editor><div id='lean-full-code-5' style='display:none'>section
+  variables (x y z : ℕ)
+  variables (h₁ : x = y) (h₂ : y = z)
+
+  section include_hs
+  include h₁ h₂
+
+  theorem foo : x = z :=
+  begin
+    rw [h₁, h₂]
+  end
+
+  end include_hs
+
+  theorem bar : x = z :=
+  eq.trans h₁ h₂
+
+  theorem baz : x = x := rfl
+
+  check @foo
+  check @bar
+  check @baz
+end
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-5').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The include command is often useful with structures that are not
+mentioned explicitly but meant to be inferred by type class inference,
+as described in <a href="#" onclick="myModule.loadTutorial('10_Type_Classes.html', null)">Chapter 10</a>.
+</p>
+
+<p>
+It is often the case that we want to declare section variables as
+explicit variables but later make them implicit, or vice-versa. One
+can do this with a <code>variables</code> command that mentions these variables
+with the desired brackets, without repeating the type again. Once
+again, sections can be used to delimit scope. In the
+example below, the variables <code>x</code>, <code>y</code>, and <code>z</code> are marked implicit in
+<code>foo</code> but explicit in <code>bar</code>, while <code>x</code> is (somewhat perversely) marked
+as implicit in <code>baz</code>.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-6' mode="ace/mode/lean" readonly="true">section
+  variables (x y z : ℕ)
+  variables (h₁ : x = y) (h₂ : y = z)
+
+  section
+    variables {x y z}
+    include h₁ h₂
+    theorem foo : x = z :=
+    begin
+      rw [h₁, h₂]
+    end
+  end
+
+  theorem bar : x = z :=
+  eq.trans h₁ h₂
+
+  variable {x}
+  theorem baz : x = x := rfl
+
+  check @foo
+  check @bar
+  check @baz
+end
+</juicy-ace-editor><div id='lean-full-code-6' style='display:none'>section
+  variables (x y z : ℕ)
+  variables (h₁ : x = y) (h₂ : y = z)
+
+  section
+    variables {x y z}
+    include h₁ h₂
+    theorem foo : x = z :=
+    begin
+      rw [h₁, h₂]
+    end
+  end
+
+  theorem bar : x = z :=
+  eq.trans h₁ h₂
+
+  variable {x}
+  theorem baz : x = x := rfl
+
+  check @foo
+  check @bar
+  check @baz
+end
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-6').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+Using these subsequent <code>variables</code> commands does not change the order
+in which variables are inserted. It only changes the explicit /
+implicit annotations.
+</p>
+
+<p>
+In fact, Lean has two ways of introducing local elements into the
+sections, namely, as <code>variables</code> or as <code>parameters</code>. In the initial
+example in this section, the variable <code>x</code> is generalized immediately,
+so that even within the section <code>double</code> is a function of <code>x</code>, and
+<code>t1</code> and <code>t2</code> depend explicitly on <code>x</code>. This is what makes it possible
+to apply <code>double</code> and <code>t1</code> to other expressions, like <code>y</code> and <code>2 *
+x</code>. It corresponds to the ordinary mathematical locution "in this
+section, let <code>x</code> and <code>y</code> range over the natural numbers." Whenever <code>x</code>
+and <code>y</code> occur, we assume they denote natural numbers, but we do not
+assume they refer to the same natural number from theorem to theorem.
+</p>
+
+<p>
+Sometimes, however, we wish to <i>fix</i> a value in a section. For
+example, following ordinary mathematical vernacular, we might say "in
+this section, we fix a type, <code>α</code>, and a binary relation <code>r</code> on <code>α</code>."
+The notion of a <code>parameter</code> captures this usage:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-7' mode="ace/mode/lean" readonly="true">section
+  parameters {α : Type} (r : α → α → Type)
+  parameter  transr : ∀ {x y z}, r x y → r y z → r x z
+
+  variables {a b c d e : α}
+
+  theorem t1 (h₁ : r a b) (h₂ : r b c) (h₃ : r c d) : r a d :=
+  transr (transr h₁ h₂) h₃
+
+  theorem t2 (h₁ : r a b) (h₂ : r b c) (h₃ : r c d) (h₄ : r d e) :
+    r a e :=
+  transr h₁ (t1 h₂ h₃ h₄)
+
+  check t1
+  check t2
+end
+
+check t1
+check t2
+</juicy-ace-editor><div id='lean-full-code-7' style='display:none'>section
+  parameters {α : Type} (r : α → α → Type)
+  parameter  transr : ∀ {x y z}, r x y → r y z → r x z
+
+  variables {a b c d e : α}
+
+  theorem t1 (h₁ : r a b) (h₂ : r b c) (h₃ : r c d) : r a d :=
+  transr (transr h₁ h₂) h₃
+
+  theorem t2 (h₁ : r a b) (h₂ : r b c) (h₃ : r c d) (h₄ : r d e) :
+    r a e :=
+  transr h₁ (t1 h₂ h₃ h₄)
+
+  check t1
+  check t2
+end
+
+check t1
+check t2
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-7').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+As with variables, the parameters <code>α</code>, <code>r</code>, and <code>transR</code> are inserted
+as arguments to definitions and theorems as needed. But there is a
+difference: within the section, <code>t1</code> is an abbreviation for <code>@t1 α r
+transr</code>, which is to say, these arguments are held fixed until the
+section is closed. On the plus side, this means that you do not have
+to specify the explicit arguments <code>r</code> and <code>transr</code> when you write <code>t1
+h₂ h₃ h₄</code>, in contrast to the previous example. But it also means that
+you cannot specify other arguments in their place. In this example,
+making <code>r</code> a parameter is appropriate if <code>r</code> is the only binary
+relation you want to reason about in the section. In that case, it
+would make sense to introduce temporary infix notation like <code>≼</code> for
+<code>r</code>, and we will see in <a href="#" onclick="myModule.scrollTutorialTo('Notation')">Section 6.6</a> how to do that. On the other hand,
+if you want to apply your theorems to arbitrary binary relations
+within the section, you should make <code>r</code> a variable.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9976874" class="outline-3">
+<h3 id="More_on_Namespaces"><a id="org9976874"></a><span class="section-number-3"> 6.3</span> More on Namespaces</h3>
+<div class="outline-text-3" id="text-More_on_Namespaces">
+<p>
+In Lean, identifiers are given by hierarchical <i>names</i> like
+<code>foo.bar.baz</code>. We saw in <a href="#" onclick="myModule.loadTutorial('02_Dependent_Type_Theory.html', 'Namespaces')">Section 2.7</a> that Lean provides mechanisms for
+working with hierarchical names. The command <code>namespace foo</code> causes
+<code>foo</code> to be prepended to the name of each definition and theorem until
+<code>end foo</code> is encountered. The command <code>open foo</code> then creates
+temporary <i>aliases</i> to definitions and theorems that begin with prefix
+<code>foo</code>.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-8' mode="ace/mode/lean" readonly="true">namespace foo
+def bar : ℕ := 1
+end foo
+
+open foo
+
+check bar
+check foo.bar
+</juicy-ace-editor><div id='lean-full-code-8' style='display:none'>namespace foo
+def bar : ℕ := 1
+end foo
+
+open foo
+
+check bar
+check foo.bar
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-8').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+It is not important the the definition of <code>foo.bar</code> was the result of
+a <code>namespace</code> command:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-9' mode="ace/mode/lean" readonly="true">def foo.bar : ℕ := 1
+
+open foo
+
+check bar
+check foo.bar
+</juicy-ace-editor><div id='lean-full-code-9' style='display:none'>def foo.bar : ℕ := 1
+
+open foo
+
+check bar
+check foo.bar
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-9').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+Although the names of theorems and definitions have to be unique, the
+aliases that identify them do not. For example, the standard library
+defines a theorem <code>add_sub_cancel</code>, which asserts <code>a + b - b = a</code> in
+any additive group. The corresponding theorem on the natural numbers
+is named <code>nat.add_sub_cancel</code>; it is not a special case of
+<code>add_sub_cancel</code>, because the natural numbers do not form a
+group. When we open the <code>nat</code> namespace, the expression
+<code>add_sub_cancel</code> is overloaded, and can refer to either one. Lean
+tries to use type information to disambiguate the meaning in context,
+but you can always disambiguate by giving the full name. To that end,
+the string <code>_root_</code> is an explicit description of the empty prefix.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-10' mode="ace/mode/lean" readonly="true">check add_sub_cancel
+check nat.add_sub_cancel
+check _root_.add_sub_cancel
+</juicy-ace-editor><div id='lean-full-code-10' style='display:none'>check add_sub_cancel
+check nat.add_sub_cancel
+check _root_.add_sub_cancel
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-10').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+We can prevent the shorter alias from being created by using the
+<code>protected</code> keyword:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-11' mode="ace/mode/lean" readonly="true">namespace foo
+protected def bar : ℕ := 1
+end foo
+
+open foo
+
+-- check bar -- error
+check foo.bar
+</juicy-ace-editor><div id='lean-full-code-11' style='display:none'>namespace foo
+protected def bar : ℕ := 1
+end foo
+
+open foo
+
+-- check bar -- error
+check foo.bar
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-11').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+This is often used for names like <code>nat.rec_on</code> and <code>nat.induction_on</code>,
+to prevent overloading of common names.
+</p>
+
+<p>
+The <code>open</code> command admits variations. The command
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-12' mode="ace/mode/lean" readonly="true">open nat (succ add sub)
+</juicy-ace-editor><div id='lean-full-code-12' style='display:none'>open nat (succ add sub)
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-12').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+creates aliases for only the identifiers listed. The command
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-13' mode="ace/mode/lean" readonly="true">open nat (hiding succ add sub)
+</juicy-ace-editor><div id='lean-full-code-13' style='display:none'>open nat (hiding succ add sub)
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-13').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+creates aliases for everything in the <code>nat</code> namespace <i>except</i> the
+identifiers lists. The command
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-14' mode="ace/mode/lean" readonly="true">open nat (renaming induction_on → induction_on) (renaming add → plus) (hiding succ sub)
+</juicy-ace-editor><div id='lean-full-code-14' style='display:none'>open nat (renaming induction_on → induction_on) (renaming add → plus) (hiding succ sub)
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-14').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+creates aliases for everything in the <code>nat</code> namespace except <code>succ</code>
+and <code>sub</code>, renaming <code>nat.add</code> to <code>plus</code>, and renaming the protected
+definition <code>nat.induction_on</code> to <code>induction_on</code>.
+</p>
+
+<p>
+It is sometimes useful to <code>export</code> aliases from one namespace to
+another, or to the top level. The command
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-15' mode="ace/mode/lean" readonly="true">export nat (succ add sub)
+</juicy-ace-editor><div id='lean-full-code-15' style='display:none'>export nat (succ add sub)
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-15').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+creates aliases for <code>succ</code>, <code>add</code>, and <code>sub</code> in the current namespace,
+so that whenever the namespace is open, these aliases are
+available. If this command is used outside a namespace, the aliases
+are exported to the top level. The <code>export</code> command admits all the
+variations described above.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4e6e814" class="outline-3">
+<h3 id="Attributes"><a id="org4e6e814"></a><span class="section-number-3"> 6.4</span> Attributes</h3>
+<div class="outline-text-3" id="text-Attributes">
+<p>
+The main function of Lean is to translate user input to formal
+expressions that are checked by the kernel for correctness and then
+stored in the environment for later use. But some commands have other
+effects on the environment, either assigning attributes to objects in
+the environment, defining notation, or declaring instances of type
+classes, as described in <a href="#" onclick="myModule.loadTutorial('10_Type_Classes.html', 'Type_Classes')">Chapter 10</a>. Most of these commands have global
+effects, which is to say, that they remain in effect not only in the
+current file, but also in any file that imports it. However, such
+commands can often be prefixed with the <code>local</code> modifier, which
+indicates that they only have effect until the current <code>section</code> or
+<code>namespace</code> is closed, or until the end of the current file.
+</p>
+
+<p>
+In the last Chapter, we saw that theorems can be annotated with the
+<code>[simp]</code> attribute, which makes them available for use by the
+simplifier. The following example defines divisibility on the natural
+numbers, uses it to make the natural numbers an instance of a type for
+which the divisibility notation <code>\|</code> is available (the <code>instance</code>
+command will be explained in <a href="#" onclick="myModule.loadTutorial('10_Type_Classes.html', 'Type_Classes')">Chapter 10</a>), and assign the <code>[simp]</code>
+attribute.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-16' mode="ace/mode/lean" readonly="true">def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+instance : has_dvd nat := ⟨nat.dvd⟩
+
+attribute [simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 := by simp
+</juicy-ace-editor><div id='lean-full-code-16' style='display:none'>def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+instance : has_dvd nat := ⟨nat.dvd⟩
+
+attribute [simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 := by simp
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-16').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+Here the simplifier proves <code>5 ∣ 5</code> by rewriting it to <code>true</code>. Lean
+allows the alternative annotation <code>@[simp]</code> before a theorem to assign
+the attribute:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-17' mode="ace/mode/lean" readonly="true">@[simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩</juicy-ace-editor><div id='lean-full-code-17' style='display:none'>def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+instance : has_dvd nat := ⟨nat.dvd⟩
+
+@[simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-17').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+One can also assign the attribute any time after the definition takes
+place:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-18' mode="ace/mode/lean" readonly="true">theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+attribute [simp] nat.dvd_refl</juicy-ace-editor><div id='lean-full-code-18' style='display:none'>def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+instance : has_dvd nat := ⟨nat.dvd⟩
+
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+attribute [simp] nat.dvd_refl
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-18').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+In all these cases, the attribute remains in effect in any file that
+imports the one in which the declaration occurs. But adding the
+<code>local</code> modifier restricts the scope:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-19' mode="ace/mode/lean" readonly="true">section
+local attribute [simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 := by simp
+end
+
+-- error:
+-- example : 5 ∣ 5 := by simp</juicy-ace-editor><div id='lean-full-code-19' style='display:none'>def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+instance : has_dvd nat := ⟨nat.dvd⟩
+
+section
+local attribute [simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 := by simp
+end
+
+-- error:
+-- example : 5 ∣ 5 := by simp
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-19').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+In fact, the <code>instance</code> command works by automatically generating a
+theorem name and assigning an <code>[instance]</code> attribute to it. The
+declaration can also be made local:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-20' mode="ace/mode/lean" readonly="true">section
+def has_dvd_nat : has_dvd nat := ⟨nat.dvd⟩
+
+local attribute [instance] has_dvd_nat
+
+local attribute [simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 := by simp
+end
+
+-- error: 
+-- check 5 ∣ 5</juicy-ace-editor><div id='lean-full-code-20' style='display:none'>def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+section
+def has_dvd_nat : has_dvd nat := ⟨nat.dvd⟩
+
+local attribute [instance] has_dvd_nat
+
+local attribute [simp]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 := by simp
+end
+
+-- error: 
+-- check 5 ∣ 5
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-20').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+For yet another example, the <code>reflexivity</code> tactic makes use of objects
+in the environment that have been tagged with the <code>[refl]</code> attribute:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-21' mode="ace/mode/lean" readonly="true">@[simp,refl]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 :=
+by reflexivity</juicy-ace-editor><div id='lean-full-code-21' style='display:none'>def nat.dvd (m n : ℕ) : Prop := ∃ k, n = m * k
+
+instance has_dvd_nat : has_dvd nat := ⟨nat.dvd⟩
+
+@[simp,refl]
+theorem nat.dvd_refl (n : ℕ) : n ∣ n :=
+⟨1, by simp⟩
+
+example : 5 ∣ 5 :=
+by reflexivity
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-21').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The scope of the <code>[refl]</code> attribute can similarly be restricted using
+the <code>local</code> modifier, as above.
+</p>
+
+<p>
+In <a href="#" onclick="myModule.scrollTutorialTo('Notation')">Section 6.6</a> below, we will discuss Lean's mechanisms for defining
+notation, and see that they also support the <code>local</code>
+modifier. Howeover, in <a href="#" onclick="myModule.scrollTutorialTo('Setting_Options')">Section 6.8</a>, we will discuss Lean's mechanisms
+for setting options, which does <i>not</i> follow this pattern: options can
+<i>only</i> be set locally, which is to say, their scope is always
+restricted to the current section or current file.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga927725" class="outline-3">
+<h3 id="More_on_Implicit_Arguments"><a id="orga927725"></a><span class="section-number-3"> 6.5</span> More on Implicit Arguments</h3>
+<div class="outline-text-3" id="text-More_on_Implicit_Arguments">
+<p>
+In <a href="#" onclick="myModule.loadTutorial('02_Dependent_Type_Theory.html', 'Implicit_Arguments')">Section 2.9</a>, we saw that if Lean displays the type of a term <code>t</code> as
+<code>Π {x : α}, β x</code>, then the curly brackets indicate that <code>x</code> has been
+marked as an <i>implicit argument</i> to <code>t</code>. This means that whenever you
+write <code>t</code>, a placeholder, or "hole," is inserted, so that <code>t</code> is
+replaced by <code>@t _</code>. If you don't want that to happen, you have to
+write <code>@t</code> instead.
+</p>
+
+<p>
+Notice that implicit arugments are inserted eagerly. Suppose we define
+a function <code>f (x : ℕ) {y : ℕ} (z : ℕ)</code> with the arguments shown. Then,
+when we write the expression <code>f 7</code> without further arguments, it
+parsed as <code>f 7 _</code>. Lean offers a weaker annotation, <code>{{y : ℕ}}</code>, which
+specifies that a placeholder should only be added <i>before</i> a
+subsequent explicit argument. This annotation can also be written
+using as <code>⦃y : ℕ⦄</code>, where the unicode brackets are entered as <code>\{{</code>
+and <code>\}}</code>, respectively. With this annotation, the expression <code>f 7</code>
+would be parsed as is, whereas <code>f 7 3</code> would be parsed as <code>f 7 _ 3</code>,
+just as it would be with the strong annotation.
+</p>
+
+<p>
+To illustrate the difference, consider the following example, which
+shows that a reflexive euclidean relation is both symmetric and
+transitive. 
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-22' mode="ace/mode/lean" readonly="true">variables {α : Type} (r : α → α → Prop)
+
+definition reflexive  : Prop := ∀ (a : α), r a a
+definition symmetric  : Prop := ∀ {a b : α}, r a b → r b a
+definition transitive : Prop := ∀ {a b c : α}, r a b → r b c → r a c
+definition euclidean  : Prop := ∀ {a b c : α}, r a b → r a c → r b c
+
+variable {r}
+
+theorem th1 (reflr : reflexive r) (euclr : euclidean r) : symmetric r :=
+take a b : α, suppose r a b,
+show r b a, from euclr this (reflr _)
+
+theorem th2 (symmr : symmetric r) (euclr : euclidean r) : transitive r :=
+take (a b c : α), assume (rab : r a b) (rbc : r b c),
+euclr (symmr rab) rbc
+
+-- ERROR:
+/-
+theorem th3 (reflr : reflexive r) (euclr : euclidean r) : transitive r :=
+th2 (th1 reflr euclr) euclr
+-/
+
+theorem th3 (reflr : reflexive r) (euclr : euclidean r) : transitive r :=
+@th2 _ _ (@th1 _ _ reflr @euclr) @euclr</juicy-ace-editor><div id='lean-full-code-22' style='display:none'>namespace hide
+variables {α : Type} (r : α → α → Prop)
+
+definition reflexive  : Prop := ∀ (a : α), r a a
+definition symmetric  : Prop := ∀ {a b : α}, r a b → r b a
+definition transitive : Prop := ∀ {a b c : α}, r a b → r b c → r a c
+definition euclidean  : Prop := ∀ {a b c : α}, r a b → r a c → r b c
+
+variable {r}
+
+theorem th1 (reflr : reflexive r) (euclr : euclidean r) : symmetric r :=
+take a b : α, suppose r a b,
+show r b a, from euclr this (reflr _)
+
+theorem th2 (symmr : symmetric r) (euclr : euclidean r) : transitive r :=
+take (a b c : α), assume (rab : r a b) (rbc : r b c),
+euclr (symmr rab) rbc
+
+-- ERROR:
+/-
+theorem th3 (reflr : reflexive r) (euclr : euclidean r) : transitive r :=
+th2 (th1 reflr euclr) euclr
+-/
+
+theorem th3 (reflr : reflexive r) (euclr : euclidean r) : transitive r :=
+@th2 _ _ (@th1 _ _ reflr @euclr) @euclr
+end hide
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-22').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The results are broken down into small steps: <code>th1</code> shows that a
+relation that is reflexive and euclidean is symmetric, and <code>th2</code> shows
+that a relation that is symmetric and euclidean is transitive. Then
+<code>th3</code> combines the two results. But notice that we have to manually
+disable the implicit arguments in <code>th1</code>, <code>th2</code>, and <code>euclr</code>, because
+otherwise too many implicit arguments are inserted. The problem goes
+away if we use weak implicit arguments:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-23' mode="ace/mode/lean" readonly="true">variables {α : Type} (r : α → α → Prop)
+
+definition reflexive  : Prop := ∀ (a : α), r a a
+definition symmetric  : Prop := ∀ ⦃a b : α⦄, r a b → r b a
+definition transitive : Prop := ∀ ⦃a b c : α⦄, r a b → r b c → r a c
+definition euclidean  : Prop := ∀ ⦃a b c : α⦄, r a b → r a c → r b c
+
+variable {r}
+
+theorem th1 (reflr : reflexive r) (euclr : euclidean r) : symmetric r :=
+take a b : α, suppose r a b,
+show r b a, from euclr this (reflr _)
+
+theorem th2 (symmr : symmetric r) (euclr : euclidean r) : transitive r :=
+take (a b c : α), assume (rab : r a b) (rbc : r b c),
+euclr (symmr rab) rbc
+
+theorem th3 (reflr : reflexive r) (euclr : euclidean r) : transitive r :=
+th2 (th1 reflr euclr) euclr</juicy-ace-editor><div id='lean-full-code-23' style='display:none'>namespace hide
+variables {α : Type} (r : α → α → Prop)
+
+definition reflexive  : Prop := ∀ (a : α), r a a
+definition symmetric  : Prop := ∀ ⦃a b : α⦄, r a b → r b a
+definition transitive : Prop := ∀ ⦃a b c : α⦄, r a b → r b c → r a c
+definition euclidean  : Prop := ∀ ⦃a b c : α⦄, r a b → r a c → r b c
+
+variable {r}
+
+theorem th1 (reflr : reflexive r) (euclr : euclidean r) : symmetric r :=
+take a b : α, suppose r a b,
+show r b a, from euclr this (reflr _)
+
+theorem th2 (symmr : symmetric r) (euclr : euclidean r) : transitive r :=
+take (a b c : α), assume (rab : r a b) (rbc : r b c),
+euclr (symmr rab) rbc
+
+theorem th3 (reflr : reflexive r) (euclr : euclidean r) : transitive r :=
+th2 (th1 reflr euclr) euclr
+end hide
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-23').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+There is a third kind of implicit argument that is denoted with square
+brackets, <code>[</code> and <code>]</code>. These are used for type classes, as explained
+in <a href="#" onclick="myModule.scrollTutorialTo('10_Type_Classes.html#MissingReference')">Chapter 10</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4adefe9" class="outline-3">
+<h3 id="Notation"><a id="org4adefe9"></a><span class="section-number-3"> 6.6</span> Notation</h3>
+<div class="outline-text-3" id="text-Notation">
+<p>
+Lean's parser is an instance of a Pratt parser, a non-backtracking
+parser that is fast and flexible. You can read about Pratt parsers in
+a number of places online, such as here:
+</p>
+<blockquote>
+<p>
+<a target='_blank' href="http://en.wikipedia.org/wiki/Pratt_parser">http://en.wikipedia.org/wiki/Pratt_parser</a>
+<a target='_blank' href="http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing">http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing</a>
+</p>
+</blockquote>
+<p>
+Identifiers can include any alphanumeric characters, including Greek
+characters (other than Π , Σ , and λ , which, as we have seen, have a
+special meaning in the dependent type theory). They can also include
+subscripts, which can be entered by typing <code>\_</code> followed
+by the desired subscripted character.
+</p>
+
+<p>
+Lean's parser is extensible, which is to say, we can define
+new notation.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-24' mode="ace/mode/lean" readonly="true">notation `[` a `**` b `]` := a * b + 1
+
+def mul_square (a b : ℕ) := a * a * b * b
+
+infix `&lt;*&gt;`:50 := mul_square
+
+eval [2 ** 3]
+eval 2 &lt;*&gt; 3
+</juicy-ace-editor><div id='lean-full-code-24' style='display:none'>notation `[` a `**` b `]` := a * b + 1
+
+def mul_square (a b : ℕ) := a * a * b * b
+
+infix `&lt;*&gt;`:50 := mul_square
+
+eval [2 ** 3]
+eval 2 &lt;*&gt; 3
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-24').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+In this example, the <code>notation</code> command defines a complex binary
+notation for multiplying and adding one. The <code>infix</code> command declares
+a new infix operator, with precedence 50, which associates to the
+left. (More precisely, the token is given left-binding power 50.) The
+command <code>infixr</code> defines notation which associates to the right,
+instead.
+</p>
+
+<p>
+If you declare these notations in a namespace, the notation is only
+available when the namespace is open. You can declare temporary notation
+using the keyword <code>local</code>, in which case the notation is available
+in the current file, and moreover, within the scope of the current
+<code>namespace</code> or <code>section</code>, if you are in one.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-25' mode="ace/mode/lean" readonly="true">local notation `[` a `**` b `]` := a * b + 1
+local infix `&lt;*&gt;`:50 := λ a b : ℕ, a * a * b * b
+</juicy-ace-editor><div id='lean-full-code-25' style='display:none'>local notation `[` a `**` b `]` := a * b + 1
+local infix `&lt;*&gt;`:50 := λ a b : ℕ, a * a * b * b
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-25').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+Lean's stanard library declares the left-binding powers of a number of
+common symbols.
+</p>
+<blockquote>
+<p>
+<a target='_blank' href="https://github.com/leanprover/lean/blob/master/library/init/core.lean">https://github.com/leanprover/lean/blob/master/library/init/core.lean</a>
+</p>
+</blockquote>
+<p>
+You are welcome to overload these symbols for your own use, but you
+cannot change their binding power.
+</p>
+
+<p>
+You can direct the pretty-printer to suppress notation
+with the command <code>set_option pp.notation false</code>. You can also declare
+notation to be used for input purposes only with the <code>[parsing_only]</code>
+attribute:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-26' mode="ace/mode/lean" readonly="true">notation [parsing_only] `[` a `**` b `]` := a * b + 1
+
+variables a b : ℕ
+check [a ** b]
+</juicy-ace-editor><div id='lean-full-code-26' style='display:none'>notation [parsing_only] `[` a `**` b `]` := a * b + 1
+
+variables a b : ℕ
+check [a ** b]
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-26').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The output of the <code>check</code> command displays the expression as <code>a * b +
+1</code>. Lean also provides mechanisms for iterated notation, such as <code>[a,
+b, c, d, e]</code> to denote a list with the indicated elements. See the
+discussion of <code>list</code> in the next chapter for an example.
+</p>
+
+<p>
+The possibility of declaring parameters in a section also makes it
+possible to define local notation that depends on those
+parameters. In the example below, as long as the parameter <code>m</code> is
+fixed, we can write <code>a ≡ b</code> for equivalence modulo <code>m</code>. As soon as the
+section is closed, however, the dependence on <code>m</code> becomes explicit,
+and the notation <code>a ≡ b</code> is no longer valid.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-27' mode="ace/mode/lean" readonly="true">section mod_m
+  parameter (m : ℤ)
+  variables (a b c : ℤ)
+
+  definition mod_equiv := (m ∣ b - a)
+
+  local infix ≡ := mod_equiv
+
+  theorem mod_refl : a ≡ a :=
+  show m ∣ a - a, by simp
+
+  theorem mod_symm (h : a ≡ b) : b ≡ a :=
+  by cases h with c hc; apply dvd_intro (-c); simp [eq.symm hc]
+
+  theorem mod_trans (h₁ : a ≡ b) (h₂ : b ≡ c) : a ≡ c :=
+  begin
+    cases h₁ with d hd, cases h₂ with e he, apply dvd_intro (d + e),
+    simp [mul_add, eq.symm hd, eq.symm he]
+  end
+end mod_m
+
+check (mod_refl : ∀ (m a : ℤ), mod_equiv m a a)
+
+check (mod_symm : ∀ (m a b : ℤ), mod_equiv m a b → mod_equiv m b a)
+
+check (mod_trans : ∀ (m a b c : ℤ), 
+                    mod_equiv m a b → mod_equiv m b c → mod_equiv m a c)</juicy-ace-editor><div id='lean-full-code-27' style='display:none'>namespace int
+
+def dvd (m n : ℤ) : Prop := ∃ k, n = m * k
+instance : has_dvd int := ⟨int.dvd⟩
+
+@[simp]
+theorem dvd_zero (n : ℤ) : n ∣ 0 :=
+⟨0, by simp⟩
+
+theorem dvd_intro {m n : ℤ} (k : ℤ) (h : n = m * k) : m ∣ n :=
+⟨k, h⟩
+
+end int
+
+open int
+
+section mod_m
+  parameter (m : ℤ)
+  variables (a b c : ℤ)
+
+  definition mod_equiv := (m ∣ b - a)
+
+  local infix ≡ := mod_equiv
+
+  theorem mod_refl : a ≡ a :=
+  show m ∣ a - a, by simp
+
+  theorem mod_symm (h : a ≡ b) : b ≡ a :=
+  by cases h with c hc; apply dvd_intro (-c); simp [eq.symm hc]
+
+  theorem mod_trans (h₁ : a ≡ b) (h₂ : b ≡ c) : a ≡ c :=
+  begin
+    cases h₁ with d hd, cases h₂ with e he, apply dvd_intro (d + e),
+    simp [mul_add, eq.symm hd, eq.symm he]
+  end
+end mod_m
+
+check (mod_refl : ∀ (m a : ℤ), mod_equiv m a a)
+
+check (mod_symm : ∀ (m a b : ℤ), mod_equiv m a b → mod_equiv m b a)
+
+check (mod_trans : ∀ (m a b c : ℤ), 
+                    mod_equiv m a b → mod_equiv m b c → mod_equiv m a c)
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-27').text());">Try it yourself &raquo;</button></div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org84576ac" class="outline-3">
+<h3 id="Coercions"><a id="org84576ac"></a><span class="section-number-3"> 6.7</span> Coercions</h3>
+<div class="outline-text-3" id="text-Coercions">
+<p>
+In Lean, the type of natural numbers, <code>nat</code>, is different from the
+type of integers, <code>int</code>. But there is a function <code>int.of_nat</code> that
+embeds the natural numbers in the integers, meaning that we can view
+any natural numbers as an integer, when needed. Lean has mechanisms to
+detect and insert <i>coercions</i> of this sort.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-28' mode="ace/mode/lean" readonly="true">variables m n : ℕ
+variables i j : ℤ
+
+check i + m      -- i + ↑m : ℤ
+check i + m + j  -- i + ↑m + j : ℤ
+check i + m + n  -- i + ↑m + ↑n : ℤ
+</juicy-ace-editor><div id='lean-full-code-28' style='display:none'>variables m n : ℕ
+variables i j : ℤ
+
+check i + m      -- i + ↑m : ℤ
+check i + m + j  -- i + ↑m + j : ℤ
+check i + m + n  -- i + ↑m + ↑n : ℤ
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-28').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+Notice that the output of the <code>check</code> command shows that a coercion
+has been inserted by printing an arrow. The latter is notation for
+the function <code>coe</code>; you can type the unicode arrow with <code>\u</code> or use
+the <code>coe</code> instead. In fact, when the order of arguments is different,
+you have to insert the coercion manually, because Lean does not
+recognize the need for a coercion until it has already parsed the
+earlier arguments.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-29' mode="ace/mode/lean" readonly="true">check ↑m + i        -- ↑m + i : ℤ
+check ↑(m + n) + i  -- ↑(m + n) + i : ℤ
+check ↑m + ↑n + i   -- ↑m + ↑n + i : ℤ</juicy-ace-editor><div id='lean-full-code-29' style='display:none'>variables m n : ℕ
+variables i j : ℤ
+
+check ↑m + i        -- ↑m + i : ℤ
+check ↑(m + n) + i  -- ↑(m + n) + i : ℤ
+check ↑m + ↑n + i   -- ↑m + ↑n + i : ℤ
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-29').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+In fact, Lean allows various kinds of coercions using type classes;
+for details, see <a href="#" onclick="myModule.loadTutorial('10_Type_Classes.html', 'Coercions_using_Type_Classes')">Section 10.6</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgbb4a12a" class="outline-3">
+<h3 id="Displaying_Information"><a id="orgbb4a12a"></a><span class="section-number-3"> 6.8</span> Displaying Information</h3>
+<div class="outline-text-3" id="text-Displaying_Information">
+<p>
+There are a number of ways in which you can query Lean for information
+about its current state and the objects and theorems that are
+available in the current context. You have already seen two of the
+most common ones, <code>check</code> and <code>eval</code>. Remember that <code>check</code> is often
+used in conjunction with the <code>@</code> operator, which makes all of the
+arguments to a theorem or definition explicit. In addition, you can
+use the <code>print</code> command to get information about any identifier. If
+the identifier denotes a definition or theorem, Lean prints the type
+of the symbol, and its definition. If it is a constant or an axiom,
+Lean indicates that fact, and shows the type.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-30' mode="ace/mode/lean" readonly="true">-- examples with equality
+check eq
+check @eq
+check eq.symm
+check @eq.symm
+
+print eq.symm
+
+-- examples with and
+check and
+check and.intro
+check @and.intro
+
+-- examples with addition
+check add
+check @add
+eval add 3 2
+print add
+
+-- a user-defined function
+def foo {α : Type} (x : α) : α := x
+
+check foo
+check @foo
+eval foo
+eval (foo @nat.zero)
+print foo
+</juicy-ace-editor><div id='lean-full-code-30' style='display:none'>-- examples with equality
+check eq
+check @eq
+check eq.symm
+check @eq.symm
+
+print eq.symm
+
+-- examples with and
+check and
+check and.intro
+check @and.intro
+
+-- examples with addition
+check add
+check @add
+eval add 3 2
+print add
+
+-- a user-defined function
+def foo {α : Type} (x : α) : α := x
+
+check foo
+check @foo
+eval foo
+eval (foo @nat.zero)
+print foo
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-30').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+There are other useful <code>print</code> commands:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-text">print definition             : display definition
+print inductive              : display an inductive type and its constructors
+print notation               : display all notation
+print notation &lt;tokens&gt;      : display notation using any of the tokens
+print axioms                 : display assumed axioms
+print options                : display options set by user
+print prefix &lt;namespace&gt;     : display all declarations in the namespace
+print classes                : display all classes
+print instances &lt;class name&gt; : display all instances of the given class
+print fields &lt;structure&gt;     : display all "fields" of a structure
+</pre>
+</div>
+<p>
+We will discuss inductive types, structures, classes, instances in the
+next four chapters. Here are examples of how these commands are used:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-32' mode="ace/mode/lean" readonly="true">print notation
+print notation + * -
+print axioms
+print options
+print prefix nat
+print prefix nat.le
+print classes
+print instances ring
+print fields ring
+</juicy-ace-editor><div id='lean-full-code-32' style='display:none'>print notation
+print notation + * -
+print axioms
+print options
+print prefix nat
+print prefix nat.le
+print classes
+print instances ring
+print fields ring
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-32').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+The behavior of the generic print command is determined by its
+argument, so that the following pairs of commands all do the same
+thing.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-33' mode="ace/mode/lean" readonly="true">print add
+print definition add
+
+print +
+print notation +
+
+print nat
+print inductive nat
+
+print group
+print inductive group
+</juicy-ace-editor><div id='lean-full-code-33' style='display:none'>print add
+print definition add
+
+print +
+print notation +
+
+print nat
+print inductive nat
+
+print group
+print inductive group
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-33').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+Moreover, both <code>print group</code> and <code>print inductive group</code> recognize
+that a group is a structure (see <a href="#" onclick="myModule.loadTutorial('09_Structures_and_Records.html', 'Structures_and_Records')">Chapter 9</a>), and so print the fields as
+well.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org926cb1c" class="outline-3">
+<h3 id="Setting_Options"><a id="org926cb1c"></a><span class="section-number-3"> 6.9</span> Setting Options</h3>
+<div class="outline-text-3" id="text-Setting_Options">
+<p>
+Lean maintains a number of internal variables that can be set by users
+to control its behavior. The syntax for doing so is as follows:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-text">set_option &lt;name&gt; &lt;value&gt;
+</pre>
+</div>
+
+<p>
+One very useful family of options controls the way Lean's <i>pretty-
+printer</i> displays terms. The following options take an input of true
+or false:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-text">pp.implicit  : display implicit arguments
+pp.universes : display hidden universe parameters
+pp.coercions : show coercions
+pp.notation  : display output using defined notations
+pp.beta      : beta reduce terms before displaying them
+</pre>
+</div>
+
+<p>
+As an example, the following settings yield much longer output:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-36' mode="ace/mode/lean" readonly="true">set_option pp.implicit true
+set_option pp.universes true
+set_option pp.notation false
+set_option pp.numerals false
+
+check 2 + 2 = 4
+eval (λ x, x + 2) = (λ x, x + 3)
+check (λ x, x + 1) 1
+</juicy-ace-editor><div id='lean-full-code-36' style='display:none'>set_option pp.implicit true
+set_option pp.universes true
+set_option pp.notation false
+set_option pp.numerals false
+
+check 2 + 2 = 4
+eval (λ x, x + 2) = (λ x, x + 3)
+check (λ x, x + 1) 1
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-36').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The command <code>set_option pp.all true</code> carries out these settings all at
+once, whereas <code>set_option pp.all false</code> reverts to the previous
+values. Pretty printing additional information is often very useful
+when you are debugging a proof, or trying to understand a cryptic
+error message. Too much information can be overwhelming, though, and
+Lean's defaults are generally sufficient for ordinary interactions.
+</p>
+
+<p>
+By default, the pretty-printer does not reduce applied
+lambda-expressions, but this is sometimes useful. The <code>pp.beta</code> option
+controls this feature.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-37' mode="ace/mode/lean" readonly="true">set_option pp.beta true
+check (λ x, x + 1) 1
+</juicy-ace-editor><div id='lean-full-code-37' style='display:none'>set_option pp.beta true
+check (λ x, x + 1) 1
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-37').text());">Try it yourself &raquo;</button></div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb3d2665" class="outline-3">
+<h3 id="Elaboration_Hints"><a id="orgb3d2665"></a><span class="section-number-3"> 6.10</span> Elaboration Hints</h3>
+<div class="outline-text-3" id="text-Elaboration_Hints">
+<p>
+When you ask Lean to process an expression like <code>λ x y z, f (x + y)
+z</code>, you are leaving information implicit. For example, the types of
+<code>x</code>, <code>y</code>, and <code>z</code> have to be inferred from the context, the notation
+<code>+</code> may be overloaded, and there may be implicit arguments to <code>f</code> that
+need to be filled in as well. Moreover, we will see in <a href="#" onclick="myModule.loadTutorial('10_Type_Classes.html', 'Type_Classes')">Chapter 10</a> that
+some implicit arguments are synthesized by a process known as <i>type
+class resolution</i>. And we have also already seen in the last chapter
+that some parts of an expression can be constructed by the tactic
+framework.
+</p>
+
+<p>
+Inferring some implicit arguments is straightforward. For example,
+suppose a function <code>f</code> has type <code>Π {α : Type}, α → α → α</code> and Lean is
+trying to parse the expression <code>f n</code>, where <code>n</code> can be inferred to
+have type <code>nat</code>. Then it is clear that the implicit argument <code>α</code> has
+to be <code>nat</code>. However, some inference problems are <i>higher order</i>. For
+example, the substitution operation for equality, <code>eq.subst</code>, has the
+following type:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-38' mode="ace/mode/lean" readonly="true">eq.subst : ∀ {α : Sort u} {P : α → Prop} {a b : α}, a = b → P a → P b
+</juicy-ace-editor><div id='lean-full-code-38' style='display:none'>eq.subst : ∀ {α : Sort u} {P : α → Prop} {a b : α}, a = b → P a → P b
+</div>
+</div>
+<p>
+Now suppose we are given <code>a b : ℕ</code> and <code>h₁ : a = b</code> and <code>h₂ : a * b &gt;
+a</code>. Then, in the expression <code>eq.subst h₁ h₂</code>, <code>P</code> could be any of the
+following:
+</p>
+<ul class="org-ul">
+<li><code>λ x, x * b &gt; x</code></li>
+<li><code>λ x, x * b &gt; a</code></li>
+<li><code>λ x, a * b &gt; x</code></li>
+<li><code>λ x, a * b &gt; a</code></li>
+</ul>
+<p>
+In other words, our intent may be to replace either the first or
+second <code>a</code> in <code>h₂</code>, or both, or neither. Similar ambiguities arise in
+inferring induction predicates, or inferring function arguments. Even
+second-order unification is known to be undecidable. Lean therefore
+relies on heuristics to fill in such arguments, and when it fails to
+guess the right ones, they need to be provided explicity.
+</p>
+
+<p>
+To make matters worse, sometimes definitions need to be unfolded, and
+sometimes expressions need to be reduced according to the
+computational rules of the underlying logical framework. Once again,
+Lean has to rely on heuristics to determine what to unfold or reduce,
+and when.
+</p>
+
+<p>
+There are attributes, however, that can be used to provide hints to
+the elaborator. One class of attributes determines how eagerly
+definitions are unfolded: constants can be marked with the attribute
+<code>[reducible]</code>, <code>[semireducible]</code>, or <code>[irreducible]</code>. Definitions are
+marked <code>[semireducible]</code> by default. A definition with the
+<code>[reducible]</code> attribute is unfolded eagerly; if you think of a
+definition are serving as an abbreviation, this attribute would be
+appropriate. The elaborator avoids unfolding definitions with the
+<code>[irreducible]</code> attribute. Theorems are marked <code>[irreducible]</code> by
+default, because typically proofs are not relevant to the elaboration
+process.
+</p>
+
+<p>
+It is worth emphasizing that these attributes are only hints to the
+elaborator. When checking an elaborated term for correctness, Lean's
+kernel will unfold whatever definitions it needs to unfold. As with
+other attributes, the ones above can be assigned with the <code>local</code>
+modifier, so that they are in effect only in the current section or
+file.
+</p>
+
+<p>
+Lean also has a family of attributes that control the elaboration
+strategy. A definition or theorem can be marked
+<code>[elab_with_expected_type]</code>, <code>[elab_simple]</code>. or
+<code>[elab_as_eliminator]</code>. When applied to a definition <code>f</code>, these
+bear on elaboration of an expression <code>f a b c ...</code> in which <code>f</code> is
+applied to arguments. With the default attribute,
+<code>[elab_with_expected_type]</code>, the arguments <code>a</code>, <code>b</code>, <code>c</code>, &#x2026; are
+elaborating using information about their expected type, inferred from
+<code>f</code> and the previous arguments. In contrast, with <code>[elab_simple]</code>, the
+arguments are elaborated from left to right without propagating
+information about their types. The last attribute,
+<code>[elab_as_eliminator]</code>, is commonly used for eliminators like
+recursors, induction principles, and <code>eq.subst</code>. It uses a separate
+heuristic to infer higher-order parameters. We will consider such
+operations in more detail in the next chapter.
+</p>
+
+<p>
+Once again, these attributes can assigned and reassigned after an
+object is defined, and you can use the <code>local</code> modifier to limit their
+scope. Moreover, using the <code>@</code> simple in front of an identifier in an
+expression instructs the elaborator to use the <code>[elab_simple]</code>
+strategy; the idea is that, when you provide the tricky parameters
+explicitly, you want the elaborator to weigh that information
+heavily. In fact, Lean offers an alterantive annotation, <code>@@</code>, which
+leaves parameters before the first higher-order parameter
+explicit. For example, <code>@@eq.subst</code> leaves the type of the
+equation implicit, but makes the context of the substitution explicit.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org25d735e" class="outline-3">
+<h3 id="Using_the_Library"><a id="org25d735e"></a><span class="section-number-3"> 6.11</span> Using the Library</h3>
+<div class="outline-text-3" id="text-Using_the_Library">
+<p>
+To use Lean effectively you will inevitably need to make use of
+definitions and theorems in the library. Recall that the <code>import</code>
+command at the beginning of a file imports previously compiled results
+from other files, and that importing is transitive; if you import
+<code>foo</code> and <code>foo</code> imports <code>bar</code>, then the definitions and theorems from
+<code>bar</code> are available to you as well. But the act of opening a namespace,
+which provides shorter names,
+does not carry over. In each file, you need to open the namespaces
+you wish to use.
+</p>
+
+<p>
+In general, it is important for you to be familiar with the library
+and its contents, so you know what theorems, definitions, notations,
+and resources are available to you. Below we will see that Lean's
+editor modes can also help you find things you need, but studying the
+contents of the library directly is often unavoidable. Lean's standard
+library can be found online, on github:
+</p>
+<blockquote>
+<p>
+<a target='_blank' href="https://github.com/leanprover/lean/tree/master/library">https://github.com/leanprover/lean/tree/master/library</a>
+</p>
+</blockquote>
+<p>
+You can see the contents of the directories and files using github's
+browser interface. If you have installed Lean on your own computer,
+you can find the library in the <code>lean</code> folder, and explore it
+with your file manager. Comment headers at the top of each file
+provide additional information.
+</p>
+
+<p>
+Lean's library developers follow general naming guidelines to make it
+easier to guess the name of a theorem you need, or to find it using
+tab completion in editors with a Lean mode that supports this, which
+is discussed in the next section. Identifiers are generally
+<code>snake_case</code>, which is to say, they are composed of words written in
+lower case separated by underscores. For the most part, we rely on
+descriptive names. Often the name of theorem simply describes the
+conclusion:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-39' mode="ace/mode/lean" readonly="true">open nat
+
+check succ_ne_zero
+check @mul_zero
+check @mul_one
+check @sub_add_eq_add_sub
+check @le_iff_lt_or_eq
+</juicy-ace-editor><div id='lean-full-code-39' style='display:none'>open nat
+
+check succ_ne_zero
+check @mul_zero
+check @mul_one
+check @sub_add_eq_add_sub
+check @le_iff_lt_or_eq
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-39').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+If only a prefix of the description is enough to convey the meaning,
+the name may be made even shorter:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-40' mode="ace/mode/lean" readonly="true">check @neg_neg
+check pred_succ</juicy-ace-editor><div id='lean-full-code-40' style='display:none'>open nat
+
+check @neg_neg
+check pred_succ
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-40').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+Sometimes, to disambiguate the name of theorem or better convey the
+intended reference, it is necessary to describe some of the
+hypotheses. The word "of" is used to separate these hypotheses:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-41' mode="ace/mode/lean" readonly="true">check @nat.lt_of_succ_le
+check @lt_of_not_ge
+check @lt_of_le_of_ne
+check @add_lt_add_of_lt_of_le
+</juicy-ace-editor><div id='lean-full-code-41' style='display:none'>check @nat.lt_of_succ_le
+check @lt_of_not_ge
+check @lt_of_le_of_ne
+check @add_lt_add_of_lt_of_le
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-41').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+Sometimes the word "left" or "right" is helpful to describe variants
+of a theorem.
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-42' mode="ace/mode/lean" readonly="true">check @add_le_add_left
+check @add_le_add_right
+</juicy-ace-editor><div id='lean-full-code-42' style='display:none'>check @add_le_add_left
+check @add_le_add_right
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-42').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+We can also use the word "self" to indicate a repeated argument:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-43' mode="ace/mode/lean" readonly="true">check mul_inv_self
+check neg_add_self
+</juicy-ace-editor><div id='lean-full-code-43' style='display:none'>check mul_inv_self
+check neg_add_self
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-43').text());">Try it yourself &raquo;</button></div>
+</div>
+
+<p>
+Remember that identifiers in Lean can be organized into hierarchical
+namespaces. For example, the theorem named <code>lt_of_succ_le</code> in the
+namespace <code>nat</code> has full name <code>nat.lt_of_succ_le</code>, but the shorter
+name is made available by the command <code>open nat</code>. We will see in
+<a href="#" onclick="myModule.loadTutorial('07_Inductive_Types.html', 'Inductive_Types')">Chapter 7</a> and <a href="#" onclick="myModule.loadTutorial('09_Structures_and_Records.html', 'Structures_and_Records')">Chapter 9</a> that defining structures and inductive data
+types in Lean generates associated operations, and these are stored in
+a namespace with the same name as the type under definition. For
+example, the product type comes with the following opens:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-44' mode="ace/mode/lean" readonly="true">check @prod.mk
+check @prod.fst
+check @prod.snd
+check @prod.rec
+</juicy-ace-editor><div id='lean-full-code-44' style='display:none'>check @prod.mk
+check @prod.fst
+check @prod.snd
+check @prod.rec
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-44').text());">Try it yourself &raquo;</button></div>
+</div>
+<p>
+The first is used to construct a pair, whereas the next two,
+<code>prod.fst</code> and <code>prod.snd</code>, project the two elements. The last,
+<code>prod.rec</code>, provides another mechanism for defining functions on a
+product in terms of a function on the two components. Names like
+<code>prod.rec</code> are <i>protected</i>, which means that one has to use the full
+name even when the <code>prod</code> namespace is open.
+</p>
+
+<p>
+With the propositions as types correspondence, logical connectives are
+also instances of inductive types, and so we tend to use dot notation for them as well:
+</p>
+<div class="org-src-container">
+<juicy-ace-editor id='lean-juicy-ace-editor-45' mode="ace/mode/lean" readonly="true">check @and.intro
+check @and.elim
+check @and.left
+check @and.right
+check @or.inl
+check @or.inr
+check @or.elim
+check @exists.intro
+check @exists.elim
+check @eq.refl
+check @eq.subst
+</juicy-ace-editor><div id='lean-full-code-45' style='display:none'>check @and.intro
+check @and.elim
+check @and.left
+check @and.right
+check @or.inl
+check @or.inr
+check @or.elim
+check @exists.intro
+check @exists.elim
+check @eq.refl
+check @eq.subst
+</div><div class='no-print' align="left"><button type="button" onclick="invoke_leanjs($('#lean-full-code-45').text());">Try it yourself &raquo;</button></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
